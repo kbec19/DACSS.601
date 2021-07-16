@@ -40,5 +40,9 @@ mtcars.mpg <- arrange(mtcars_new2, desc(mpg))
 mtcars_mpg20 <- filter(mtcars.mpg, mpg<20) 
 
 
-  
+## Executing an operation that requires creating a new object and doing something to that object
+
+
+```
+## Executing a creative and fun manipulation to a portion of these data that hasn't been covered so far in the course materials
 
