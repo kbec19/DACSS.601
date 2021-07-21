@@ -39,10 +39,32 @@ mtcars.mpg <- arrange(mtcars_new2, desc(mpg))
 
 mtcars_mpg20 <- filter(mtcars.mpg, mpg<20) 
 
+# this is how we arrange 
 
-## Executing an operation that requires creating a new object and doing something to that object
+(mtcars.mpg.hp <- arrange(mtcars_new, desc(hp),desc(mpg)))
 
+# this is how we arrange and mutate variables
 
-```
-## Executing a creative and fun manipulation to a portion of these data that hasn't been covered so far in the course materials
+mtcars_new.eff <- mutate(mtcars.mpg20,
+                    efficient=case_when(
+                      mpg >= 20 & hp >= 100 ~ 1,
+                      mpg < 20 | hp < 100 ~ 0
+                    ))
+
+mtcars_new.eff %>% 
+  group_by(efficient) %>% 
+  summarise(
+    mean_wt=mean(wt),
+    median_wt=median(wt)
+  )
+
+# left_join is a mutating join that adds all rows in x to a database
+    
+mtcars_joined <- left_join(mtcars_new.eff, mtcars)                    
+                    
+mtcars_joined %>% 
+  group_by(am, vs) %>% 
+  summarise(mean_mpg=mean(mpg),
+            mean_hp=mean(hp)) %>% 
+  arrange(desc(mean_mpg))
 
