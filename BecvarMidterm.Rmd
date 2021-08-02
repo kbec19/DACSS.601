@@ -1,0 +1,133 @@
+---
+title: "Midterm"
+author: "Kristina Becvar"
+date: "7/30/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(blogbuilder)
+library(distill)
+library(dplyr)
+library(magrittr)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# **Reading in the data:**
+
+## This assumes that the data file is in the same folder as the RMarkdown and not in a separate file. 
+
+### If it were in a separate file, we would need to use ../ to tell R to look up and then in another level of files.
+
+```{r echo=TRUE}
+flag.colors <- read.delim("flag-colors.csv", sep = ",", header  = TRUE)
+```
+
+# *1. In a paragraph or two, describe these data. What are they? What questions could you answer from them? How many observations are there? How many variables? How much missing data and on which variables?*
+
+## The data in this file represent the countries of the world, along with the location of the country by geographic landmass and quadrant, as well as demographic data about each country. In addition, it contains data on the specifics details of each country's flag (e.g. colors, bars, stripes). Although the dataset does include these details on the flags of each country, the demographic and geographic data make it a versatile tool for looking at geographic observations of religion, language, population, location, and of course how those factors might correlate with features of the countries' flags.
+
+```{r echo=TRUE}
+dim(flag.colors)
+```
+```{r echo=TRUE}
+(flag.tibble <- as_tibble(flag.colors))
+```
+
+```{r echo=TRUE}
+flag.tibble[!complete.cases(flag.tibble),]
+```
+
+## The dimensions of the dataset are 194 observations of 18 variables. Evaluating the dataset for missing data, it is missing observations for area and population for a combined total of 10 of the countries observed.
+
+# *2.	If you filter out cases with incomplete data, how many cases are there? As you go through each of the following tasks, try to use as many cases as possible. If you need to drop cases, tell me how many you dropped and why.*
+
+## Filtering cases with incomplete data would leave us with 184 observations. However, coming back to this later, I realize that I need to drop more cases - 62 total in order to have data in the population and area columns that is greater than "0".
+
+# *3.	Recode the population variable to reflect that it is in millions.*
+
+```{r echo=TRUE}
+(flag.tibble$Population <- flag.tibble$Population * 1000000)
+```
+
+# *4.	How should you recode the area variable (hint: look in the variable names file)? Recode the variable*
+
+## Since the number represented in the dataset was the number in thousands, I muliplied it out to get the actual number representing the area.
+
+```{r echo=TRUE}
+(flag.tibble$Area <- flag.tibble$Area * 1000)
+```
+
+# *6.	Create a new variable that says whether a country is densely populated or not. It is up to you how you define “densely population”, but just tell me how you defined it.*
+
+## I divided the population by the area of each country; 
+
+```{r echo=TRUE}
+(flag.tibble$density <- flag.tibble$Population / flag.tibble$Area)
+```
+## I then decided that I would consider density over 200 as "high population density".
+
+```{r echo=TRUE}
+flag.tibble <- flag.tibble %>% 
+  mutate(density = case_when(
+    density > 200 ~ "high density",
+    density <= 200 ~ "not high density"
+  ))
+```
+
+## After creating this new variable, I ran another "complete.cases" function and found that there were many more issues, as creating the density column created "NaN", not a number, indicators where there had been data in the area variable column, but that data was "0". Dividing by "0" created the "NaN", so I ran another "drop.na" to discard the additional incomplete cases, leaving 152 complete cases. 
+
+### However, that made me realize that my population vs. area visualization included a lot of "0" values, so I should filter those when using that variable.
+
+```{r echo=TRUE}
+tidy.flag <- filter(flag.tibble, 
+                    Population > 0,
+                    Area > 0)
+```
+
+# *5.	Do larger countries have larger populations (show this in a figure).*
+
+## I selected the categories I intend to compare
+
+```{r echo=TRUE}
+tidy.flag %>% 
+  ggplot(aes(x = Population, y = Area)) + 
+  geom_point() + 
+  ggtitle("Area v. Population")
+```
+
+# *7.	Do countries with different religions have different population sizes, population densities, or geographical areas. Describe this in numbers and at least one figure.*
+
+## I had a difficult time deciding how to visualize this question/answer. I feel like I need to better understand the pivot functions, and that they may have been relevant here. I used the facet plotting function to analyze that yes, there is a relationship between religion and geographical areas, but not a strong relationship between religion and population sizes or population densities.
+
+```{r echo=TRUE}
+ggplot(data=tidy.flag, mapping = aes(x = Zone, y = Religion)) + 
+  geom_point() +
+  facet_wrap(~Religion) +
+  theme_bw()
+```
+
+# *8.	Are the main hue of the flag and the religion related at all?*
+
+## These variables do not seem to be related at all.
+
+```{r echo=TRUE}
+tidy.flag %>% 
+  ggplot(aes(x = Religion , y = mainhue)) + 
+  geom_point() + 
+  ggtitle("Main Hue of Flag and Religion of Country")
+```
+
+# *9. Look at the relationship between one other flag characteristics and any of the non-flag characteristics. Describe any relationship (or lack of relationship) that you find and use figures to show it as well.*
+
+## Looking at the relaionship between whether there is a star on a flag and what the religion is of a country. There is no clear relationship between those variables.
+
+```{r echo=TRUE}
+tidy.flag %>% 
+  ggplot(aes(x = Religion , y = Colours)) + 
+  geom_point() + 
+  ggtitle("Religion and Number of Flag Colours")
+```
+
+
